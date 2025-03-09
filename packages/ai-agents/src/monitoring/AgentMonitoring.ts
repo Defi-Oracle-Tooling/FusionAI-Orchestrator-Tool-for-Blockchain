@@ -134,72 +134,19 @@ export class AgentMonitoring {
     } catch (error) {
       logger.error('Error getting agent health', error as Error, {
         agentId: this.agentId
-            labels
-          );
+      });
+      return {
+        status: 'unhealthy',
+        details: {
+          error: (error as Error).message
         }
-      }
-    } catch (error) {
-      console.error('Failed to record training metrics:', error);
-      await this.monitoring.recordMetric(
-        'monitoring_error_count',
-        1,
-        {
-          ...labels,
-          error_type: (error as Error).name,
-          error_message: (error as Error).message
-        }
-      );
+      };
     }
   }
 
-  async recordAgentResourceUsage(
-    agent: Agent,
-    metrics: {
-      cpuUsage?: number;
-      memoryUsage?: number;
-      apiCalls?: number;
-    }
-  ): Promise<void> {
-    const labels = {
-      [LabelNames.AGENT_ID]: agent.id,
-      [LabelNames.AGENT_TYPE]: agent.name
-    };
-
-    try {
-      if (metrics.cpuUsage !== undefined) {
-        await this.monitoring.recordMetric(
-          MetricNames.CPU_USAGE,
-          metrics.cpuUsage,
-          labels
-        );
-      }
-
-      if (metrics.memoryUsage !== undefined) {
-        await this.monitoring.recordMetric(
-          MetricNames.MEMORY_USAGE,
-          metrics.memoryUsage,
-          labels
-        );
-      }
-
-      if (metrics.apiCalls !== undefined) {
-        await this.monitoring.recordMetric(
-          'agent_api_calls',
-          metrics.apiCalls,
-          labels
-        );
-      }
-    } catch (error) {
-      console.error('Failed to record resource usage metrics:', error);
-      await this.monitoring.recordMetric(
-        'monitoring_error_count',
-        1,
-        {
-          ...labels,
-          error_type: (error as Error).name,
-          error_message: (error as Error).message
-        }
-      );
-    }
+  private calculateAverage(values: number[]): number {
+    if (values.length === 0) return 0;
+    const sum = values.reduce((a, b) => a + b, 0);
+    return sum / values.length;
   }
 }

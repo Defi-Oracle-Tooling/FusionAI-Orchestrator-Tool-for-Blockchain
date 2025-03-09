@@ -1,55 +1,74 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface WorkflowStatus {
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  status: 'running' | 'completed' | 'failed' | 'paused';
   progress: number;
-  results: any[];
+  activeSteps: number;
+  completedSteps: number;
+  timeRemaining: number;
+  lastUpdate: string;
 }
 
-export const useWorkflowWebSocket = (workflowId: string) => {
-  const [status, setStatus] = useState<WorkflowStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
+export const useWorkflowWebSocket = (workflowId?: string) => {
+  const [workflowStatus, setWorkflowStatus] = useState<WorkflowStatus | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000'}/ws/workflows/${workflowId}`;
-    const ws = new WebSocket(wsUrl);
+    if (!workflowId) return;
 
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ type: 'subscribe' }));
-    };
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    const reconnectDelay = 1000; // Start with 1 second delay
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'error') {
-          setError(data.error);
-        } else {
-          setStatus(data);
-          setError(null);
+    const connect = () => {
+      const ws = new WebSocket(`ws://${window.location.host}/api/workflows/${workflowId}/ws`);
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'status') {
+            setWorkflowStatus(data);
+            setError(null);
+            reconnectAttempts = 0; // Reset reconnect attempts on successful message
+          }
+        } catch (err) {
+          setError(err as Error);
         }
-      } catch (err) {
-        setError('Failed to parse workflow status update');
-      }
+      };
+
+      ws.onclose = (event) => {
+        if (!event.wasClean && reconnectAttempts < maxReconnectAttempts) {
+          // Exponential backoff for reconnection
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+          setTimeout(() => {
+            reconnectAttempts++;
+            connect();
+          }, delay);
+        }
+      };
+
+      ws.onerror = (event) => {
+        setError(new Error('WebSocket connection error'));
+      };
+
+      // Request initial status
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: 'getStatus' }));
+      };
+
+      return ws;
     };
 
-    ws.onerror = (event) => {
-      setError('WebSocket connection error');
-      console.error('WebSocket error:', event);
-    };
-
-    ws.onclose = () => {
-      setError('WebSocket connection closed');
-    };
-
-    wsRef.current = ws;
+    const ws = connect();
 
     return () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-      }
+      ws.close();
     };
   }, [workflowId]);
 
-  return { status, error };
+  const retryConnection = () => {
+    setError(null);
+  };
+
+  return { workflowStatus, error, retryConnection };
 };

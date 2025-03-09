@@ -1,207 +1,230 @@
-import React, { useState, useEffect } from 'react';
-import { Panel } from 'reactflow';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-
-interface Metric {
-  name: string;
-  value: number;
-  timestamp: number;
-  labels: Record<string, string>;
-}
-
-interface Alert {
-  id: string;
-  severity: 'info' | 'warning' | 'critical';
-  message: string;
-  timestamp: number;
-}
+import React, { useEffect, useState } from 'react';
+import {
+  Box,
+  Card,
+  Typography,
+  CircularProgress,
+  Grid,
+  Alert,
+  Chip,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import {
+  Timeline,
+  TimelineItem,
+  TimelineSeparator,
+  TimelineConnector,
+  TimelineContent,
+  TimelineDot,
+} from '@mui/lab';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import ErrorIcon from '@mui/icons-material/Error';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning';
+import { useBlockchainNodeWebSocket } from '../../hooks/useBlockchainNodeWebSocket';
+import { useWorkflowWebSocket } from '../../hooks/useWorkflowWebSocket';
 
 interface MonitoringPanelProps {
-  workflowId: string;
+  workflowId?: string;
+  nodeId?: string;
 }
 
-export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({ workflowId }) => {
-  const [metrics, setMetrics] = useState<Metric[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [historicalData, setHistoricalData] = useState<Record<string, Metric[]>>({});
+export const MonitoringPanel: React.FC<MonitoringPanelProps> = ({
+  workflowId,
+  nodeId,
+}) => {
+  const [metrics, setMetrics] = useState<any>({});
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  const { nodeStatus } = useBlockchainNodeWebSocket(nodeId);
+  const { workflowStatus } = useWorkflowWebSocket(workflowId);
 
   useEffect(() => {
-    const ws = new WebSocket(
-      `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000'}/ws/monitoring/${workflowId}`
-    );
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'metric') {
-        const metric = data.metric;
-        setMetrics(prev => [...prev, metric].slice(-100));
-        
-        // Update historical data for charts
-        setHistoricalData(prev => ({
-          ...prev,
-          [metric.name]: [
-            ...(prev[metric.name] || []),
-            metric
-          ].slice(-50) // Keep last 50 points for charts
-        }));
-      } else if (data.type === 'alert') {
-        setAlerts(prev => [...prev, data.alert].slice(-50));
+    const fetchMetrics = async () => {
+      try {
+        const response = await fetch('/api/metrics');
+        const data = await response.json();
+        setMetrics(data);
+        setLastUpdated(new Date());
+      } catch (error) {
+        console.error('Error fetching metrics:', error);
       }
     };
 
-    return () => ws.close();
-  }, [workflowId]);
+    const fetchAlerts = async () => {
+      try {
+        const response = await fetch('/api/alerts');
+        const data = await response.json();
+        setAlerts(data);
+      } catch (error) {
+        console.error('Error fetching alerts:', error);
+      }
+    };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'bg-red-600';
-      case 'warning': return 'bg-yellow-500';
-      default: return 'bg-blue-500';
+    fetchMetrics();
+    fetchAlerts();
+
+    const metricsInterval = setInterval(fetchMetrics, 15000);
+    const alertsInterval = setInterval(fetchAlerts, 30000);
+
+    return () => {
+      clearInterval(metricsInterval);
+      clearInterval(alertsInterval);
+    };
+  }, []);
+
+  const getHealthStatus = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return <CheckCircleIcon color="success" />;
+      case 'degraded':
+        return <WarningIcon color="warning" />;
+      case 'unhealthy':
+        return <ErrorIcon color="error" />;
+      default:
+        return <CircularProgress size={20} />;
     }
   };
 
-  const renderMetricChart = (metricName: string, color: string = '#3b82f6') => {
-    const data = historicalData[metricName] || [];
-    return (
-      <div className="h-32">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <XAxis 
-              dataKey="timestamp" 
-              tickFormatter={(ts) => new Date(ts).toLocaleTimeString()}
-              style={{ fontSize: '10px' }}
-            />
-            <YAxis style={{ fontSize: '10px' }} />
-            <Tooltip
-              labelFormatter={(ts) => new Date(Number(ts)).toLocaleTimeString()}
-              contentStyle={{ backgroundColor: '#1f2937', border: 'none' }}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="value" 
-              stroke={color} 
-              dot={false}
-              strokeWidth={2}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    );
+  const handleRefresh = () => {
+    setLastUpdated(new Date());
+    // Trigger immediate metrics update
+    fetch('/api/metrics')
+      .then(response => response.json())
+      .then(data => setMetrics(data))
+      .catch(error => console.error('Error refreshing metrics:', error));
   };
 
   return (
-    <Panel position="top-right" className="bg-gray-900 text-white rounded-lg shadow-lg w-96">
-      <div className="p-2">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center justify-between w-full"
-        >
-          <span className="font-bold">Monitoring</span>
-          <svg
-            className={`w-5 h-5 transform ${isExpanded ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
+    <Box sx={{ p: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+        <Typography variant="h6">Monitoring Dashboard</Typography>
+        <Box>
+          <Tooltip title="Last updated">
+            <Typography variant="caption" sx={{ mr: 2 }}>
+              {lastUpdated.toLocaleTimeString()}
+            </Typography>
+          </Tooltip>
+          <IconButton onClick={handleRefresh} size="small">
+            <RefreshIcon />
+          </IconButton>
+        </Box>
+      </Box>
 
-        {isExpanded && (
-          <div className="mt-2 space-y-4">
-            {/* Active Alerts */}
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Active Alerts</h3>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
+      <Grid container spacing={2}>
+        {/* Blockchain Metrics */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Blockchain Status
+              {nodeStatus && (
+                <Chip
+                  size="small"
+                  label={nodeStatus.status}
+                  color={nodeStatus.status === 'healthy' ? 'success' : 'warning'}
+                  sx={{ ml: 1 }}
+                />
+              )}
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2">Gas Price</Typography>
+                <Typography>{metrics.gasPrice || 'N/A'} Gwei</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2">Block Time</Typography>
+                <Typography>{metrics.blockTime || 'N/A'} seconds</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2">Peer Count</Typography>
+                <Typography>{metrics.peerCount || 'N/A'}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2">Transaction Load</Typography>
+                <Typography>{metrics.transactionStatus || 'N/A'}</Typography>
+              </Grid>
+            </Grid>
+          </Card>
+        </Grid>
+
+        {/* Workflow Metrics */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Workflow Status
+              {workflowStatus && (
+                <Chip
+                  size="small"
+                  label={`${workflowStatus.progress}%`}
+                  color="primary"
+                  sx={{ ml: 1 }}
+                />
+              )}
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2">Active Steps</Typography>
+                <Typography>{workflowStatus?.activeSteps || 0}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2">Completed Steps</Typography>
+                <Typography>{workflowStatus?.completedSteps || 0}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2">Time Remaining</Typography>
+                <Typography>
+                  {workflowStatus?.timeRemaining
+                    ? `${Math.round(workflowStatus.timeRemaining / 60)} min`
+                    : 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2">Status</Typography>
+                <Typography>{workflowStatus?.status || 'N/A'}</Typography>
+              </Grid>
+            </Grid>
+          </Card>
+        </Grid>
+
+        {/* Alerts Timeline */}
+        <Grid item xs={12}>
+          <Card sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Recent Alerts
+            </Typography>
+            {alerts.length > 0 ? (
+              <Timeline>
                 {alerts.map((alert, index) => (
-                  <div
-                    key={`${alert.id}-${index}`}
-                    className={`text-xs p-2 rounded ${getSeverityColor(alert.severity)}`}
-                  >
-                    <div className="flex justify-between">
-                      <span>{alert.message}</span>
-                      <span className="text-gray-300">
-                        {new Date(alert.timestamp).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  </div>
+                  <TimelineItem key={index}>
+                    <TimelineSeparator>
+                      <TimelineDot
+                        color={
+                          alert.severity === 'critical'
+                            ? 'error'
+                            : alert.severity === 'warning'
+                            ? 'warning'
+                            : 'info'
+                        }
+                      />
+                      {index < alerts.length - 1 && <TimelineConnector />}
+                    </TimelineSeparator>
+                    <TimelineContent>
+                      <Typography variant="subtitle2">{alert.summary}</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {new Date(alert.timestamp).toLocaleString()}
+                      </Typography>
+                    </TimelineContent>
+                  </TimelineItem>
                 ))}
-              </div>
-            </div>
-
-            {/* AI Agent Metrics */}
-            <div>
-              <h3 className="text-sm font-semibold mb-2">AI Agent Performance</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="text-xs text-gray-400 mb-1">Agent Response Time</div>
-                  {renderMetricChart('agent_response_time', '#3b82f6')}
-                </div>
-                <div>
-                  <div className="text-xs text-gray-400 mb-1">Agent Confidence</div>
-                  {renderMetricChart('agent_confidence', '#10b981')}
-                </div>
-              </div>
-            </div>
-
-            {/* Workflow Metrics */}
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Workflow Performance</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="text-xs text-gray-400 mb-1">Workflow Execution Time</div>
-                  {renderMetricChart('workflow_execution_time', '#8b5cf6')}
-                </div>
-                <div>
-                  <div className="text-xs text-gray-400 mb-1">Success Rate</div>
-                  {renderMetricChart('workflow_success_rate', '#f59e0b')}
-                </div>
-              </div>
-            </div>
-
-            {/* Resource Usage */}
-            <div>
-              <h3 className="text-sm font-semibold mb-2">System Resources</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {['cpu_usage', 'memory_usage', 'network_io', 'disk_io']
-                  .map((metric) => {
-                    const currentValue = metrics
-                      .find(m => m.name === metric)?.value || 0;
-                    
-                    return (
-                      <div
-                        key={metric}
-                        className="bg-gray-800 p-2 rounded"
-                      >
-                        <div className="text-xs text-gray-400">
-                          {metric.split('_').map(word => 
-                            word.charAt(0).toUpperCase() + word.slice(1)
-                          ).join(' ')}
-                        </div>
-                        <div className="text-sm font-mono">
-                          {currentValue.toFixed(2)}%
-                        </div>
-                        <div className="mt-1 h-1 bg-gray-700 rounded">
-                          <div
-                            className="h-full bg-blue-500 rounded"
-                            style={{ width: `${currentValue}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })
-                }
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </Panel>
+              </Timeline>
+            ) : (
+              <Alert severity="info">No active alerts</Alert>
+            )}
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };

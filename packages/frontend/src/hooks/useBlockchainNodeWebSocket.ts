@@ -1,84 +1,44 @@
-import { useEffect, useRef, useState } from 'react';
-
-interface NodeMetrics {
-  blockNumber: number;
-  lastUpdate: number;
-  peers?: number;
-}
+import { useState, useEffect } from 'react';
 
 interface NodeStatus {
-  status: 'active' | 'error' | 'disconnected';
-  metrics?: NodeMetrics;
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  details: Record<string, any>;
 }
 
-export const useBlockchainNodeWebSocket = (nodeId: string) => {
-  const [status, setStatus] = useState<NodeStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
+export const useBlockchainNodeWebSocket = (nodeId?: string) => {
+  const [nodeStatus, setNodeStatus] = useState<NodeStatus | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000'}/ws/blockchain/nodes/${nodeId}`;
-    const ws = new WebSocket(wsUrl);
+    if (!nodeId) return;
 
-    ws.onopen = () => {
-      // Request initial status
-      ws.send(JSON.stringify({ type: 'getStatus' }));
-    };
+    const ws = new WebSocket(`ws://${window.location.host}/api/blockchain/${nodeId}/ws`);
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        switch (data.type) {
-          case 'status':
-          case 'networkStatus':
-            setStatus({
-              status: data.status,
-              metrics: data.metrics
-            });
-            setError(null);
-            break;
-          case 'error':
-            setError(data.error);
-            break;
-          default:
-            console.warn('Unknown message type:', data.type);
+        if (data.type === 'status') {
+          setNodeStatus(data);
+          setError(null);
         }
       } catch (err) {
-        setError('Failed to parse node status update');
+        setError(err as Error);
       }
     };
 
     ws.onerror = (event) => {
-      setError('WebSocket connection error');
-      console.error('WebSocket error:', event);
+      setError(new Error('WebSocket connection error'));
     };
 
-    ws.onclose = () => {
-      setError('WebSocket connection closed');
+    // Request initial status
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'getStatus' }));
     };
-
-    wsRef.current = ws;
-
-    // Poll for status updates every 15 seconds
-    const intervalId = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'getStatus' }));
-      }
-    }, 15000);
 
     return () => {
-      clearInterval(intervalId);
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-      }
+      ws.close();
     };
   }, [nodeId]);
 
-  const refreshStatus = () => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'getStatus' }));
-    }
-  };
-
-  return { status, error, refreshStatus };
+  return { nodeStatus, error };
 };

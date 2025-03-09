@@ -1,0 +1,38 @@
+{
+  "name": "fusion-ai-orchestrator-tool-for-blockchain",
+  "version": "0.1.0",
+  "description": "Advanced orchestration tool leveraging AI and blockchain technology for real-time blockchain deployments",
+  "private": true,
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
+  "scripts": {
+    "dev": "pnpm --filter \"./packages/**\" --parallel run dev",
+    "build": "pnpm --filter \"./packages/**\" run build",
+    "test": "pnpm --filter \"./packages/**\" run test",
+    "lint": "pnpm --filter \"./packages/**\" run lint",
+    "format": "prettier --write \"**/*.{js,ts,tsx,json,md}\""
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/FusionAI-Orchestrator-Tool-for-Blockchain.git"
+  },
+  "keywords": [
+    "blockchain",
+    "ai",
+    "orchestration",
+    "hyperledger",
+    "azure",
+    "defi"
+  ],
+  "author": "",
+  "license": "MIT"
+}

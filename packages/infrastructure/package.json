@@ -1,0 +1,22 @@
+{
+  "name": "@fusion-ai/infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "validate": "cd terraform && terraform validate",
+    "plan": "cd terraform && terraform plan",
+    "apply": "cd terraform && terraform apply",
+    "destroy": "cd terraform && terraform destroy",
+    "lint": "tflint"
+  },
+  "dependencies": {
+    "@azure/arm-resources": "^5.2.0",
+    "@azure/identity": "^3.3.0",
+    "@pulumi/azure-native": "^2.0.0",
+    "@pulumi/pulumi": "^3.87.0",
+    "azure-terrafy": "^0.5.2"
+  },
+  "devDependencies": {
+    "tflint": "^0.47.0"
+  }
+}

@@ -1,0 +1,80 @@
+groups:
+  - name: blockchain_alerts
+    rules:
+      - alert: BlockchainNodeDown
+        expr: up{job="blockchain"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Blockchain node is down"
+          description: "Blockchain node has been down for more than 5 minutes"
+
+      - alert: HighGasPrice
+        expr: ethereum_gas_price > 100000000000
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High gas price detected"
+          description: "Gas price is above 100 Gwei for more than 15 minutes"
+
+  - name: ai_agent_alerts
+    rules:
+      - alert: AgentExecutionError
+        expr: ai_agent_execution_errors_total > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High AI agent execution error rate"
+          description: "AI agent has encountered multiple execution errors in the last 5 minutes"
+
+      - alert: AgentHighLatency
+        expr: ai_agent_execution_duration_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI agent high latency"
+          description: "AI agent execution time is taking longer than 30 seconds"
+
+  - name: workflow_alerts
+    rules:
+      - alert: WorkflowFailure
+        expr: workflow_execution_failures_total > 3
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Multiple workflow failures detected"
+          description: "More than 3 workflow failures in the last 5 minutes"
+
+  - name: system_alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: node_cpu_usage_percentage > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage has been above 80% for more than 10 minutes"
+
+      - alert: HighMemoryUsage
+        expr: node_memory_usage_percentage > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage has been above 85% for more than 10 minutes"
+
+      - alert: LowDiskSpace
+        expr: node_filesystem_free_bytes / node_filesystem_size_bytes * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Less than 10% disk space remaining"

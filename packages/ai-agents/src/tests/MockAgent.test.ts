@@ -1,5 +1,9 @@
-// This is a simplified test file that doesn't require external dependencies
-// It tests the basic structure and interfaces of our AI agents
+/**
+ * Simple test file for AI agents
+ * 
+ * This file provides basic structure validation for AI agents without external dependencies.
+ * It doesn't require Jest or other testing frameworks to run.
+ */
 
 import { PredictiveAnalyticsAgent } from '../agents/PredictiveAnalyticsAgent';
 import { TransactionAnomalyDetectionAgent } from '../agents/TransactionAnomalyDetectionAgent';
@@ -19,7 +23,7 @@ import { AgentConfig } from '../types/Config';
       timeout: 30000,
       retryAttempts: 3,
       llm: {
-        apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
+        apiKey: 'dummy-key', // Use environment variable in production
         model: 'gpt-4',
         temperature: 0.2,
         maxTokens: 1500,
@@ -68,7 +72,7 @@ import { AgentConfig } from '../types/Config';
       timeout: 30000,
       retryAttempts: 3,
       llm: {
-        apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
+        apiKey: 'dummy-key', // Use environment variable in production
         model: 'gpt-4',
         temperature: 0.2,
         maxTokens: 1500,
@@ -117,7 +121,7 @@ import { AgentConfig } from '../types/Config';
       timeout: 30000,
       retryAttempts: 3,
       llm: {
-        apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
+        apiKey: 'dummy-key', // Use environment variable in production
         model: 'gpt-4',
         temperature: 0.2,
         maxTokens: 1500,

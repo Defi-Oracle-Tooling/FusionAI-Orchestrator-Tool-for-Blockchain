@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 import { useWorkflowWebSocket } from '../hooks/useWorkflowWebSocket';
 import { useBlockchainNodeWebSocket } from '../hooks/useBlockchainNodeWebSocket';
+import DashboardLayout from '../layouts/DashboardLayout';
 
 // Load WorkflowCanvas dynamically with SSR disabled, as ReactFlow requires browser DOM
 const WorkflowCanvas = dynamic(() => import('../components/WorkflowCanvas/WorkflowCanvas'), {
@@ -21,7 +21,7 @@ export default function Workspace() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const workflowState = useWorkflowWebSocket(workflowId as string);
+  const { workflowStatus } = useWorkflowWebSocket(workflowId as string);
   const [activeNodes, setActiveNodes] = useState<string[]>([]);
 
   // Subscribe to blockchain node updates for each active node
@@ -79,6 +79,9 @@ export default function Workspace() {
       if (!response.ok) {
         throw new Error('Failed to save workflow');
       }
+      
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
     } catch (err) {
       console.error('Error saving workflow:', err);
       // TODO: Add proper error handling UI
@@ -87,91 +90,97 @@ export default function Workspace() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-xl text-gray-600">Loading workspace...</div>
-      </div>
+      <DashboardLayout title="Workspace">
+        <div className="flex h-full items-center justify-center">
+          <div className="text-xl text-gray-600">Loading workspace...</div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-xl text-red-600">{error}</div>
-      </div>
+      <DashboardLayout title="Workspace">
+        <div className="flex h-full items-center justify-center">
+          <div className="text-xl text-red-600">{error}</div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <Head>
-        <title>{t('workspace.title', 'Workspace - FusionAI Orchestrator')}</title>
-      </Head>
-      
-      <header className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">FusionAI Orchestrator</h1>
-          <p className="text-sm text-gray-400">Workflow ID: {workflowId}</p>
-        </div>
-        
-        {workflowState.status && (
-          <div className="flex items-center space-x-4">
-            <div className="text-sm">
-              Status: <span className="font-semibold">{workflowState.status.status}</span>
+    <DashboardLayout title={`Workspace - ${workflowId}`}>
+      <div className="h-full flex flex-col">
+        <div className="bg-white dark:bg-gray-800 shadow-sm p-4 mb-4 rounded-lg">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-semibold">Workflow Editor</h2>
+              <p className="text-sm text-gray-500">ID: {workflowId}</p>
             </div>
-            {workflowState.status.progress !== undefined && (
-              <div className="text-sm">
-                Progress: <span className="font-semibold">{workflowState.status.progress}%</span>
+            
+            {workflowStatus && (
+              <div className="flex items-center space-x-4">
+                <div className="text-sm">
+                  Status: <span className="font-semibold">{workflowStatus.status}</span>
+                </div>
+                {workflowStatus.progress !== undefined && (
+                  <div className="text-sm">
+                    Progress: <span className="font-semibold">{workflowStatus.progress}%</span>
+                  </div>
+                )}
               </div>
             )}
+
+            <div className="flex space-x-2">
+              {isSaved && (
+                <span className="text-green-600 text-sm flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Saved
+                </span>
+              )}
+              <button 
+                onClick={() => {/* TODO: Implement settings */}}
+                className="btn btn-outline text-sm"
+              >
+                Settings
+              </button>
+            </div>
           </div>
-        )}
-
-        <div className="flex space-x-4">
-          <button 
-            onClick={() => router.push('/')}
-            className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
-          >
-            Dashboard
-          </button>
-          <button 
-            onClick={() => {/* TODO: Implement settings */}}
-            className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
-          >
-            Settings
-          </button>
         </div>
-      </header>
 
-      <main className="flex-1 relative">
-        {workflowId && (
-          <WorkflowCanvas
-            workflowId={workflowId as string}
-            onSave={handleSaveWorkflow}
-          />
-        )}
-      </main>
+        <div className="flex-1 relative bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden">
+          {workflowId && (
+            <WorkflowCanvas
+              workflowId={workflowId as string}
+              onSave={handleSaveWorkflow}
+            />
+          )}
+        </div>
 
-      {/* Status bar */}
-      <footer className="bg-gray-900 text-white px-6 py-2 text-sm">
-        <div className="flex items-center space-x-6">
-          <div>
-            Active Nodes: {activeNodes.length}
+        {/* Status bar */}
+        <div className="bg-white dark:bg-gray-800 shadow-sm p-3 mt-4 rounded-lg text-sm">
+          <div className="flex items-center space-x-6">
+            <div>
+              Active Nodes: {activeNodes.length}
+            </div>
+            {nodeStates.map((state, index) => (
+              state.nodeStatus && (
+                <div key={activeNodes[index]} className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    state.nodeStatus.status === 'healthy' ? 'bg-green-400' :
+                    state.nodeStatus.status === 'unhealthy' ? 'bg-red-400' :
+                    'bg-yellow-400'
+                  }`} />
+                  <span>{activeNodes[index]}: {state.nodeStatus.status}</span>
+                </div>
+              )
+            ))}
           </div>
-          {nodeStates.map((state, index) => (
-            state.status && (
-              <div key={activeNodes[index]} className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  state.status.status === 'active' ? 'bg-green-400' :
-                  state.status.status === 'error' ? 'bg-red-400' :
-                  'bg-yellow-400'
-                }`} />
-                <span>{activeNodes[index]}: {state.status.status}</span>
-              </div>
-            )
-          ))}
         </div>
-      </footer>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
 

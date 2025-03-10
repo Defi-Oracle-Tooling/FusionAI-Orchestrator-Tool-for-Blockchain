@@ -76,7 +76,7 @@ export class ConnectionManager<T> extends EventEmitter {
     
     this.logger.info('Initializing connections', { count: initCount });
     
-    const promises = [];
+    const promises: Promise<string>[] = [];
     
     for (let i = 0; i < initCount; i++) {
       promises.push(this.createConnection());
@@ -340,7 +340,7 @@ export class ConnectionManager<T> extends EventEmitter {
     }
     
     // Release all connections
-    const promises = [];
+    const promises: Promise<void>[] = [];
     
     for (const id of this.connections.keys()) {
       promises.push(this.releaseConnection(id));

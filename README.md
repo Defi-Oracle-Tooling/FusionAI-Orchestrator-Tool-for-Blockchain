@@ -4,11 +4,46 @@ A powerful orchestration tool that combines AI agents with blockchain networks f
 
 ## Features
 
-- Real-time blockchain network monitoring
-- AI agent orchestration with multiple capabilities
-- Interactive workflow canvas
-- Performance monitoring and alerting
-- Multi-network blockchain support (Ethereum, Polygon, Hyperledger)
+### Blockchain Network Support
+
+- **Ethereum**: Mainnet and Goerli Testnet
+- **Polygon**: Mainnet and Mumbai Testnet
+- **Solana**: Mainnet and Devnet
+- **Avalanche**: C-Chain and Fuji Testnet
+- **Polkadot**: Mainnet and Westend Testnet
+- **Hyperledger Besu**: Private network support
+
+### AI Agent Capabilities
+
+- **Predictive Analytics**
+  - Price Prediction
+  - Volume Prediction
+  - Trend Analysis
+- **Transaction Anomaly Detection**
+  - Volume Anomaly Detection
+  - Suspicious Address Identification
+- **Market Sentiment Analysis**
+  - Social Media Analysis
+  - News Analysis
+  - Market Indicator Analysis
+- **Compliance Checking**
+- **Risk Assessment**
+- **Pattern Detection**
+
+### Frontend Components
+
+- **Interactive Workflow Canvas**: Visual workflow creation and management
+- **Real-time Monitoring Dashboard**: Live metrics and alerts
+- **Animated Visualizations**: Dynamic data visualization
+- **3D Parallax Effects**: Enhanced user experience
+- **Drag-and-Drop Interface**: Intuitive workflow design
+
+### Monitoring and Alerting
+
+- **Real-time Metrics Collection**: Comprehensive performance tracking
+- **Customizable Alert Rules**: Flexible alert configuration
+- **Performance Tracking**: Detailed performance metrics
+- **Resource Usage Monitoring**: System resource monitoring
 
 ## Prerequisites
 
@@ -20,7 +55,7 @@ A powerful orchestration tool that combines AI agents with blockchain networks f
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/FusionAI-Orchestrator-Tool-for-Blockchain.git
+git clone https://github.com/Defi-Oracle-Tooling/FusionAI-Orchestrator-Tool-for-Blockchain.git
 cd FusionAI-Orchestrator-Tool-for-Blockchain
 ```
 
@@ -59,10 +94,22 @@ packages/
   ├── backend/            # API and business logic
   ├── blockchain/         # Blockchain network integration
   ├── common/             # Shared utilities and types
-  ├── frontend/          # React-based UI
-  ├── monitoring/        # Monitoring and alerting system
-  └── infrastructure/    # Infrastructure management
+  ├── frontend/           # React-based UI
+  ├── monitoring/         # Monitoring and alerting system
+  └── infrastructure/     # Infrastructure management
 ```
+
+## Documentation
+
+Comprehensive documentation is available in the [docs](./docs) directory:
+
+- [Architecture](./docs/architecture/index.md): Overview of the system architecture and components
+- [User Guides](./docs/user-guides/index.md): Guides for using the FusionAI Orchestrator Tool
+- [Developer Guides](./docs/developer-guides/index.md): Guides for developing and extending the tool
+- [API Documentation](./docs/api/index.md): Documentation for the API endpoints
+- [Deployment Guides](./docs/deployment/index.md): Guides for deploying the tool
+- [Monitoring](./docs/monitoring/index.md): Information about monitoring and alerting
+- [Troubleshooting](./docs/troubleshooting/index.md): Common issues and solutions
 
 ## Monitoring System
 

@@ -1,0 +1,78 @@
+/* Parallax Container */
+.parallax-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Parallax Layers */
+.parallax-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: transform 0.2s ease-out;
+}
+
+.parallax-layer-back {
+  z-index: 1;
+}
+
+.parallax-layer-mid {
+  z-index: 2;
+}
+
+.parallax-layer-front {
+  z-index: 3;
+}
+
+/* Mouse movement effect */
+@media (hover: hover) {
+  .parallax-container:hover .parallax-layer {
+    transition: transform 0.1s ease-out;
+  }
+}
+
+/* Parallax animation for background elements */
+@keyframes float {
+  0% {
+    transform: translateY(0px) translateZ(0px);
+  }
+  50% {
+    transform: translateY(-10px) translateZ(5px);
+  }
+  100% {
+    transform: translateY(0px) translateZ(0px);
+  }
+}
+
+.parallax-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Different animation timing for multiple elements */
+.parallax-float-1 {
+  animation-delay: 0s;
+}
+
+.parallax-float-2 {
+  animation-delay: 1s;
+}
+
+.parallax-float-3 {
+  animation-delay: 2s;
+}
+
+/* Depth-based scaling */
+.parallax-scale-depth {
+  transition: transform 0.3s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .parallax-container {
+    perspective: 500px;
+  }
+}

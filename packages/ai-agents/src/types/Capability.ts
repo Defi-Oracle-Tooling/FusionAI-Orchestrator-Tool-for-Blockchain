@@ -12,7 +12,16 @@ export type AgentCapabilityType =
   | 'ANOMALY_DETECTION'
   | 'OPTIMIZATION'
   | 'PREDICTION'
-  | 'RISK_ASSESSMENT';
+  | 'RISK_ASSESSMENT'
+  | 'PRICE_PREDICTION'
+  | 'VOLUME_PREDICTION'
+  | 'TREND_ANALYSIS'
+  | 'PATTERN_DETECTION'
+  | 'VOLUME_ANOMALY'
+  | 'SUSPICIOUS_ADDRESS'
+  | 'SOCIAL_MEDIA_ANALYSIS'
+  | 'NEWS_ANALYSIS'
+  | 'MARKET_INDICATOR_ANALYSIS';
 
 export interface AgentCapability {
   type: AgentCapabilityType;

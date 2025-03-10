@@ -1,7 +1,7 @@
 export interface NetworkConfig {
   name: string;
   chainId: number;
-  networkType: 'ethereum' | 'hyperledger' | 'polygon';
+  networkType: 'ethereum' | 'hyperledger' | 'polygon' | 'solana' | 'avalanche' | 'polkadot';
   rpcUrl: string;
   wsUrl?: string;
   explorerUrl?: string;
@@ -75,6 +75,84 @@ export const networks: Record<string, NetworkConfig> = {
       name: 'Ether',
       symbol: 'ETH',
       decimals: 18
+    }
+  },
+  'solana-mainnet': {
+    name: 'Solana Mainnet',
+    chainId: 101,
+    networkType: 'solana',
+    rpcUrl: process.env.SOLANA_MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com',
+    wsUrl: process.env.SOLANA_MAINNET_WS_URL,
+    explorerUrl: 'https://explorer.solana.com',
+    nativeCurrency: {
+      name: 'Solana',
+      symbol: 'SOL',
+      decimals: 9
+    }
+  },
+  'solana-devnet': {
+    name: 'Solana Devnet',
+    chainId: 103,
+    networkType: 'solana',
+    rpcUrl: process.env.SOLANA_DEVNET_RPC_URL || 'https://api.devnet.solana.com',
+    wsUrl: process.env.SOLANA_DEVNET_WS_URL,
+    explorerUrl: 'https://explorer.solana.com/?cluster=devnet',
+    nativeCurrency: {
+      name: 'Solana',
+      symbol: 'SOL',
+      decimals: 9
+    }
+  },
+  'avalanche-mainnet': {
+    name: 'Avalanche C-Chain',
+    chainId: 43114,
+    networkType: 'avalanche',
+    rpcUrl: process.env.AVALANCHE_MAINNET_RPC_URL || 'https://api.avax.network/ext/bc/C/rpc',
+    wsUrl: process.env.AVALANCHE_MAINNET_WS_URL,
+    explorerUrl: 'https://snowtrace.io',
+    nativeCurrency: {
+      name: 'Avalanche',
+      symbol: 'AVAX',
+      decimals: 18
+    }
+  },
+  'avalanche-fuji': {
+    name: 'Avalanche Fuji Testnet',
+    chainId: 43113,
+    networkType: 'avalanche',
+    rpcUrl: process.env.AVALANCHE_FUJI_RPC_URL || 'https://api.avax-test.network/ext/bc/C/rpc',
+    wsUrl: process.env.AVALANCHE_FUJI_WS_URL,
+    explorerUrl: 'https://testnet.snowtrace.io',
+    nativeCurrency: {
+      name: 'Avalanche',
+      symbol: 'AVAX',
+      decimals: 18
+    }
+  },
+  'polkadot-mainnet': {
+    name: 'Polkadot Mainnet',
+    chainId: 0,
+    networkType: 'polkadot',
+    rpcUrl: process.env.POLKADOT_MAINNET_RPC_URL || 'https://rpc.polkadot.io',
+    wsUrl: process.env.POLKADOT_MAINNET_WS_URL || 'wss://rpc.polkadot.io',
+    explorerUrl: 'https://polkadot.subscan.io',
+    nativeCurrency: {
+      name: 'Polkadot',
+      symbol: 'DOT',
+      decimals: 10
+    }
+  },
+  'polkadot-westend': {
+    name: 'Polkadot Westend Testnet',
+    chainId: 0,
+    networkType: 'polkadot',
+    rpcUrl: process.env.POLKADOT_WESTEND_RPC_URL || 'https://westend-rpc.polkadot.io',
+    wsUrl: process.env.POLKADOT_WESTEND_WS_URL || 'wss://westend-rpc.polkadot.io',
+    explorerUrl: 'https://westend.subscan.io',
+    nativeCurrency: {
+      name: 'Westend',
+      symbol: 'WND',
+      decimals: 12
     }
   }
 };

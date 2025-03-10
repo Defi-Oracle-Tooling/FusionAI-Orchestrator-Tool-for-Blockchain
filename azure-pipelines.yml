@@ -1,0 +1,145 @@
+# Azure DevOps Pipeline for FusionAI Orchestrator Tool for Blockchain
+# This pipeline builds and deploys the FusionAI Orchestrator Tool to Azure
+
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+    - feature/*
+  paths:
+    exclude:
+    - README.md
+    - docs/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # Node.js version
+  nodeVersion: '18.x'
+  # PNPM version
+  pnpmVersion: '8.x'
+  # Docker registry service connection
+  dockerRegistryServiceConnection: 'fusion-ai-acr'
+  # Container registry
+  containerRegistry: 'fusionairegistry.azurecr.io'
+  # Docker repository
+  dockerRepository: 'fusionai-orchestrator'
+  # Docker image tag
+  tag: '$(Build.BuildId)'
+  # Azure Web App name
+  webAppName: 'fusion-ai-orchestrator'
+  # Azure Resource Group
+  resourceGroup: 'fusion-ai-resources'
+
+stages:
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: BuildJob
+    displayName: 'Build Job'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '$(nodeVersion)'
+      displayName: 'Install Node.js'
+
+    - script: |
+        npm install -g pnpm@$(pnpmVersion)
+      displayName: 'Install PNPM'
+
+    - script: |
+        pnpm install
+      displayName: 'Install Dependencies'
+
+    - script: |
+        pnpm run lint
+      displayName: 'Run Linting'
+
+    - script: |
+        pnpm run test
+      displayName: 'Run Tests'
+      continueOnError: true
+
+    - script: |
+        pnpm run build
+      displayName: 'Build Project'
+
+    - task: Docker@2
+      displayName: 'Build and Push Docker Image'
+      inputs:
+        command: buildAndPush
+        repository: $(dockerRepository)
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+          latest
+
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)'
+        artifact: 'drop'
+        publishLocation: 'pipeline'
+      displayName: 'Publish Pipeline Artifacts'
+
+- stage: DeployDev
+  displayName: 'Deploy to Development'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+  jobs:
+  - deployment: DeployDev
+    displayName: 'Deploy to Dev Environment'
+    environment: 'development'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureWebAppContainer@1
+            displayName: 'Deploy to Azure Web App (Dev)'
+            inputs:
+              azureSubscription: 'Azure Subscription'
+              appName: '$(webAppName)-dev'
+              resourceGroupName: '$(resourceGroup)'
+              containers: '$(containerRegistry)/$(dockerRepository):$(tag)'
+              appSettings: |
+                -WEBSITE_NODE_DEFAULT_VERSION=$(nodeVersion)
+                -REDIS_HOST=$(redisHost)
+                -REDIS_PORT=$(redisPort)
+                -REDIS_PASSWORD=$(redisPassword)
+                -ETHEREUM_MAINNET_RPC_URL=$(ethereumMainnetRpcUrl)
+                -POLYGON_MAINNET_RPC_URL=$(polygonMainnetRpcUrl)
+                -SOLANA_MAINNET_RPC_URL=$(solanaMainnetRpcUrl)
+                -AVALANCHE_MAINNET_RPC_URL=$(avalancheMainnetRpcUrl)
+                -POLKADOT_MAINNET_WS_URL=$(polkadotMainnetWsUrl)
+
+- stage: DeployProd
+  displayName: 'Deploy to Production'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployProd
+    displayName: 'Deploy to Production Environment'
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureWebAppContainer@1
+            displayName: 'Deploy to Azure Web App (Prod)'
+            inputs:
+              azureSubscription: 'Azure Subscription'
+              appName: '$(webAppName)'
+              resourceGroupName: '$(resourceGroup)'
+              containers: '$(containerRegistry)/$(dockerRepository):$(tag)'
+              appSettings: |
+                -WEBSITE_NODE_DEFAULT_VERSION=$(nodeVersion)
+                -REDIS_HOST=$(redisHost)
+                -REDIS_PORT=$(redisPort)
+                -REDIS_PASSWORD=$(redisPassword)
+                -ETHEREUM_MAINNET_RPC_URL=$(ethereumMainnetRpcUrl)
+                -POLYGON_MAINNET_RPC_URL=$(polygonMainnetRpcUrl)
+                -SOLANA_MAINNET_RPC_URL=$(solanaMainnetRpcUrl)
+                -AVALANCHE_MAINNET_RPC_URL=$(avalancheMainnetRpcUrl)
+                -POLKADOT_MAINNET_WS_URL=$(polkadotMainnetWsUrl)

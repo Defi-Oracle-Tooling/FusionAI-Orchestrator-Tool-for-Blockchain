@@ -1,10 +1,10 @@
 import React, { memo, useState, useEffect } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import NetworkStatusIndicator from '../../../animations/NetworkStatusIndicator';
-import AnimatedProgressBar from '../../../animations/AnimatedProgressBar';
-import AnimatedCounter from '../../../animations/AnimatedCounter';
-import DataFlowAnimation from '../../../animations/DataFlowAnimation';
-import AnimatedCard from '../../../animations/AnimatedCard';
+import NetworkStatusIndicator from '../../../components/animations/NetworkStatusIndicator';
+import AnimatedProgressBar from '../../../components/animations/AnimatedProgressBar';
+import AnimatedCounter from '../../../components/animations/AnimatedCounter';
+import DataFlowAnimation from '../../../components/animations/DataFlowAnimation';
+import AnimatedCard from '../../../components/animations/AnimatedCard';
 
 interface BlockchainNodeData {
   id: string;

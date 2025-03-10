@@ -19,7 +19,7 @@ import { AgentConfig } from '../types/Config';
       timeout: 30000,
       retryAttempts: 3,
       llm: {
-        apiKey: 'test-api-key',
+        apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
         model: 'gpt-4',
         temperature: 0.2,
         maxTokens: 1500,
@@ -68,7 +68,7 @@ import { AgentConfig } from '../types/Config';
       timeout: 30000,
       retryAttempts: 3,
       llm: {
-        apiKey: 'test-api-key',
+        apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
         model: 'gpt-4',
         temperature: 0.2,
         maxTokens: 1500,
@@ -117,7 +117,7 @@ import { AgentConfig } from '../types/Config';
       timeout: 30000,
       retryAttempts: 3,
       llm: {
-        apiKey: 'test-api-key',
+        apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
         model: 'gpt-4',
         temperature: 0.2,
         maxTokens: 1500,
